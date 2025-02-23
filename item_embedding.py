@@ -11,6 +11,7 @@ import numpy as np
 from typing import Dict, Set
 import os
 from pathlib import Path
+from preprocessing import preprocessing_meta_data
 
 os.environ["TOKENIZjsonERS_PARALLELISM"] = "false"
 
@@ -24,34 +25,51 @@ class ItemEmbeddingGenerator:
         Args:
             output_dimension: Embedding dimension (default 384 for MiniLM)
             include_fields: Set of fields to include in prompt
-                          (title, description, category, brand, price, sales_rank)
+                          (topic, sequence_type, problem_type, amount, difficulty)
         """
         self.model = SentenceTransformer('all-MiniLM-L6-v2')
         self.output_dimension = output_dimension
-        self.include_fields = include_fields or {'title', 'description', 'category', 'brand', 'price', 'sales_rank'}
+        self.include_fields = include_fields or {'topic', 'amount', 'difficulty', 'sequence_type', 'problem_type'} 
 
     def create_embedding_input(self, item_data: Dict) -> str:
         """Tạo prompt đầu vào dựa trên các trường được chọn"""
         prompt_parts = []
 
-        if 'title' in self.include_fields and (title := item_data.get('title')):
-            prompt_parts.append(f"title: {title}")
-
-        if 'description' in self.include_fields and (desc := item_data.get('description')):
-            prompt_parts.append(f"description: {desc}")
-
-        if 'category' in self.include_fields and (cats := item_data.get('category')):
+        if 'topic' in self.include_fields and (cats := item_data.get('topic')):
             category_str = " > ".join(cats) if isinstance(cats, list) else cats
-            prompt_parts.append(f"category: {category_str}")
+            prompt_parts.append(f"topic: {category_str}")
 
-        if 'price' in self.include_fields and (price := item_data.get('price')):
-            prompt_parts.append(f"price: {price}")
+        if 'difficulty' in self.include_fields and (difficulty := item_data.get('difficulty')):
+            prompt_parts.append(f"difficulty: {difficulty}")
 
-        if 'brand' in self.include_fields and (brand := item_data.get('brand')):
-            prompt_parts.append(f"brand: {brand}")
+        if 'amount' in self.include_fields and (amount := item_data.get('amount')):
+            prompt_parts.append(f"number of questions in the exercise: {amount}")
+            
+        if 'sequence_type' in self.include_fields and (sequence_type := item_data.get('sequence_type')):
+            if sequence_type == "LinearSection":
+                prompt_parts.append("sequence type: Student completes all problems in a predetermined order")
+            if sequence_type == "MasterySection":
+                prompt_parts.append("sequence type: Random order, and student must master the problem set by getting a certain number of questions correct in a row before being able to continue")
+            if sequence_type == "RandomIterateSection":
+                prompt_parts.append("sequence type: Student completes all problems, but each student is presented with the problems in a different random order")
 
-        if 'sales_rank' in self.include_fields and (rank := item_data.get('rank')):
-            prompt_parts.append(f"sales rank: {rank}")
+        if 'problem_type' in self.include_fields and (problem_type := item_data.get('problem_type')):
+            desc = str()
+            tmp = str()
+            for key, val in problem_type.items():
+                if key == "fill_in_1":
+                    desc += str(val) + " questions" + " Simple string-compared answer (text box); "
+                elif key == "open_response":
+                    desc += str(val) + " questions" + " Open response - Records student answer, but their response is always marked correct; "
+                elif key == "algebra":
+                    desc += str(val) + " questions" + " Math evaluated string (text box); "
+                elif key == "choose_1":
+                    desc += str(val) + " questions" + " Multiple choice (radio buttons) - only one correct answer; "
+                elif key == "choose_n":
+                    desc += str(val) + " questions" + " Multiple choice (radio buttons) - many correct answers; "
+                else:
+                    desc += str(val) + " questions" + " ranking; "
+            prompt_parts.append(f"problem type: {desc}")
 
         return "\n".join(prompt_parts)
 
@@ -67,19 +85,6 @@ class ItemEmbeddingGenerator:
             embeddings[item_id] = np.array(vector)
 
         return embeddings
-    
-    # def save_embeddings(self, embeddings, file_path="data_save/embeddings.json"):
-    #     # Chuyển `ndarray` thành list để JSON có thể lưu trữ
-    #     formatted_embeddings = {str(k): v.tolist() for k, v in embeddings.items()}
-    #     with open(file_path, 'w') as f:
-    #         json.dump(formatted_embeddings, f)
-    
-    # def load_embeddings(self, file_path="data_save/embeddings.json"):
-    #     with open(file_path, 'r') as f:
-    #         data = json.load(f)
-    #         # Chuyển list về `ndarray`
-            
-    #         return {int(k): np.array(v) for k, v in data.items()}
     
     def save_embeddings(self, embeddings, save_dir='data_save/embeddings'):
         """Save embeddings to disk"""
@@ -117,13 +122,15 @@ class ItemEmbeddingGenerator:
 
 if __name__ == "__main__":
     # Ví dụ sử dụng
-    items = {
-        "item1": {"title": "iPhone 15 Pro", "description": "Titanium frame, powerful chip", "category": ["Electronics", "Mobile Phones"], "brand": "Apple", "price": 999, "rank": 1},
-        "item2": {"title": "Samsung Galaxy S24", "description": "Latest AI-powered smartphone", "category": ["Electronics", "Mobile Phones"], "brand": "Samsung", "price": 899, "rank": 2}
-    }
+    # Constant
+    cols_needed = ["problem_id", "sequence_id", "skill", "problem_type", "type", "correct"]
+    file_path = "/home/rcyuh/Desktop/1. Đồ án tốt nghiệp/Co-supervised/assistment_2012_2013.csv"
+    nrows=1000
+    
+    pre = preprocessing_meta_data(file_path, nrows, cols_needed)
+    items = pre.process()
     
     generator = ItemEmbeddingGenerator()
     generator.debug_prompt(items)
 
-    embeddings = generator.generate_item_embeddings(items)
-    print("\nEmbedding size:", embeddings["item1"].shape)  # Output: (384,)
+    # embeddings = generator.generate_item_embeddings(items)

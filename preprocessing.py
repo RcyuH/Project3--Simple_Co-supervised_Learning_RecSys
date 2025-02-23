@@ -28,14 +28,10 @@ preprocessing for items meta data
 import pandas as pd
 from collections import Counter
 
-# Constant
-cols_needed = ["problem_id", "sequence_id", "skill", "problem_type", "type", "correct"]
-file_path = "/home/rcyuh/Desktop/1. Đồ án tốt nghiệp/Co-supervised/assistment_2012_2013.csv"
-nrows=1000
-
 class preprocessing_meta_data:
     def __init__(self, file_path, nrows, cols_needed):
         self.df = pd.read_csv(file_path, usecols=cols_needed, nrows=nrows)
+        self.dict = {}
         
         # Group by problem_id
         self.df = self.df.groupby("problem_id").agg({
@@ -64,16 +60,57 @@ class preprocessing_meta_data:
         self.df.rename(columns={"skill": "topic"}, inplace=True)
         self.df.rename(columns={"type": "sequence_type"}, inplace=True)
         
+        # convert list type -> dict type with amount
         self.df["topic"] = self.df["topic"].apply(lambda x: dict(Counter(x)))
         self.df["problem_type"] = self.df["problem_type"].apply(lambda x: dict(Counter(x)))
         
+        # convert dict type -> list type (ordered)
         self.df["topic"] = self.df["topic"].apply(lambda x: sorted(x, key=x.get, reverse=True) if isinstance(x, dict) else x)
-
+        
+        # binning diffculty
+        self.df["difficulty"] = pd.cut(
+            self.df["difficulty"],
+            bins=[0, 0.2, 0.4, 0.6, 0.8, 1],
+            labels=["Very Hard", "Hard", "Normal", "Easy", "Very Easy"],
+            include_lowest=True
+        )
+    
+    def convert_df_to_dict(self):
+        self.dict = self.df.set_index("sequence_id").to_dict(orient="index")
+    
     def process(self):
         self.group_by_sequence()
+        self.convert_df_to_dict()
         
-        return self.df
+        return self.dict
+    
+    """
+    Ngoài ra còn có thể thêm các bước xử lý khác như: 
+        - Bắt buộc phải có: Đảo giá trị của correct
+        
+        - Lọc (phải chú ý thống nhất giữa metadata và utility matrix)
+        - Binning difficulty, Ex: [0, 0.2] = Very easy, [0.2, 0.4],...
+    """
+    
+class preprocessing_matrix:
+    def __init__(self):
+        pass
+    
+    def generate_utility_matrix(self):
+        pass
+    
+    def filter_matrix(self):
+        pass
+    
+    def reverse_correct(self):
+        pass
 
-        
-pre = preprocessing_meta_data(file_path, nrows, cols_needed)
-df = pre.process()
+if __name__ == "__main__":
+    # Constant
+    cols_needed = ["problem_id", "sequence_id", "skill", "problem_type", "type", "correct"]
+    file_path = "/home/rcyuh/Desktop/1. Đồ án tốt nghiệp/Co-supervised/assistment_2012_2013.csv"
+    nrows=1000
+    
+    # Test
+    pre = preprocessing_meta_data(file_path, nrows, cols_needed)
+    df = pre.process()
