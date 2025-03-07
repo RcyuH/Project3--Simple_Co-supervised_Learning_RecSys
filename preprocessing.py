@@ -27,9 +27,10 @@ preprocessing for items meta data
 
 import pandas as pd
 from collections import Counter
+# from item_embedding import ItemEmbeddingGenerator
 
 class preprocessing_meta_data:
-    def __init__(self, file_path, nrows, cols_needed=["problem_id", "sequence_id", "skill", "problem_type", "type", "correct"], sequence_id_list=None):
+    def __init__(self, file_path, nrows=None, cols_needed=["problem_id", "sequence_id", "skill", "problem_type", "type", "correct"], sequence_id_list=None):
         self.df = pd.read_csv(file_path, usecols=cols_needed, nrows=nrows)
         self.dict = {}
         if sequence_id_list:
@@ -87,14 +88,8 @@ class preprocessing_meta_data:
         
         return self.dict
     
-    """
-    Ngoài ra còn có thể thêm các bước xử lý khác như: 
-        - Bắt buộc phải có: Đảo giá trị của correct
-        - Lọc (phải chú ý thống nhất giữa metadata và utility matrix)
-    """
-    
 class preprocessing_matrix:
-    def __init__(self, file_path, nrows, cols_needed=['user_id', 'sequence_id', 'correct']):
+    def __init__(self, file_path, nrows=None, cols_needed=['user_id', 'sequence_id', 'correct']):
         self.df = pd.read_csv(file_path, usecols=cols_needed, nrows=nrows)
         
         # Group by assignment_id và user_id, tính trung bình của cột correct
@@ -120,17 +115,28 @@ class preprocessing_matrix:
         except:
             unique_values = self.df["itemID"].unique()
         
-        return unique_values 
+        return list(unique_values) 
 
 if __name__ == "__main__":
     # Constant
     cols_needed = ["problem_id", "sequence_id", "skill", "problem_type", "type", "correct"]
     file_path = "/home/rcyuh/Desktop/1. Đồ án tốt nghiệp/Co-supervised/assistment_2012_2013.csv"
     nrows=1000
-    
-    # Test
-    pre = preprocessing_matrix(file_path, nrows)
+       
+    # Test 1
+    pre = preprocessing_matrix(file_path=file_path)
     pre.reverse_correct()
     pre.filter_matrix()
-    df = pre.df
+    matrix_df = pre.df
     unique_values = pre.extract_sequence_id()
+        
+    # Test 2
+    pre_meta = preprocessing_meta_data(file_path=file_path, sequence_id_list=unique_values)
+    items = pre_meta.process()
+    
+    # # embedding
+    # generator = ItemEmbeddingGenerator()
+    # embeddings = generator.generate_item_embeddings(items)
+    # generator.save_embeddings(embeddings=embeddings)
+    
+    
