@@ -29,10 +29,13 @@ import pandas as pd
 from collections import Counter
 
 class preprocessing_meta_data:
-    def __init__(self, file_path, nrows, cols_needed):
+    def __init__(self, file_path, nrows, cols_needed=["problem_id", "sequence_id", "skill", "problem_type", "type", "correct"], sequence_id_list=None):
         self.df = pd.read_csv(file_path, usecols=cols_needed, nrows=nrows)
         self.dict = {}
-        
+        if sequence_id_list:
+            self.sequence_id_list = sequence_id_list
+            self.df = self.df[self.df["sequence_id"].isin(sequence_id_list)]
+
         # Group by problem_id
         self.df = self.df.groupby("problem_id").agg({
             "sequence_id": "first",  # Giữ giá trị đầu tiên
@@ -91,17 +94,33 @@ class preprocessing_meta_data:
     """
     
 class preprocessing_matrix:
-    def __init__(self):
-        pass
-    
-    def generate_utility_matrix(self):
-        pass
-    
-    def filter_matrix(self):
-        pass
-    
+    def __init__(self, file_path, nrows, cols_needed=['user_id', 'sequence_id', 'correct']):
+        self.df = pd.read_csv(file_path, usecols=cols_needed, nrows=nrows)
+        
+        # Group by assignment_id và user_id, tính trung bình của cột correct
+        self.df = self.df.groupby(['sequence_id', 'user_id'])['correct'].mean()
+        # Chuyển grouped_mean từ Series thành DataFrame
+        self.df = self.df.reset_index()
+        
+        # Đổi tên các cột
+        self.df = self.df.rename(columns={'user_id': 'userID', 'sequence_id': 'itemID', 'correct': 'rating'})
+        # Đảo vị trí hai cột userID và itemID
+        self.df = self.df[['userID', 'itemID', 'rating']]
+        
     def reverse_correct(self):
-        pass
+        self.df['rating'] = (1 - self.df['rating']) * 5
+        
+    def filter_matrix(self, threshold=2):
+        # Binarize the data (only keep ratings >= threshold)
+        self.df = self.df[self.df['rating'] >= 2]
+    
+    def extract_sequence_id(self):
+        try:
+            unique_values = self.df["sequence_id"].unique()
+        except:
+            unique_values = self.df["itemID"].unique()
+        
+        return unique_values 
 
 if __name__ == "__main__":
     # Constant
@@ -110,5 +129,8 @@ if __name__ == "__main__":
     nrows=1000
     
     # Test
-    pre = preprocessing_meta_data(file_path, nrows, cols_needed)
-    df = pre.process()
+    pre = preprocessing_matrix(file_path, nrows)
+    pre.reverse_correct()
+    pre.filter_matrix()
+    df = pre.df
+    unique_values = pre.extract_sequence_id()
