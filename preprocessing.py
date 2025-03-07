@@ -87,9 +87,7 @@ class preprocessing_meta_data:
     """
     Ngoài ra còn có thể thêm các bước xử lý khác như: 
         - Bắt buộc phải có: Đảo giá trị của correct
-        
         - Lọc (phải chú ý thống nhất giữa metadata và utility matrix)
-        - Binning difficulty, Ex: [0, 0.2] = Very easy, [0.2, 0.4],...
     """
     
 class preprocessing_matrix:
