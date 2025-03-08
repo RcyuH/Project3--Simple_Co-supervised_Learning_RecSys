@@ -9,6 +9,7 @@ Created on Sun Feb 23 15:12:31 2025
 import numpy as np
 import pandas as pd
 from surprise import SVD, Dataset, Reader
+from preprocessing import preprocessing_meta_data, preprocessing_matrix
 
 class MatrixFactorizationRecommender:
     def __init__(self, ratings_df, n_factors=50):
@@ -54,3 +55,13 @@ class MatrixFactorizationRecommender:
         
         scores.sort(key=lambda x: x[1], reverse=True)
         return scores[:top_n]
+    
+if __name__ == "__main__":
+    # Constant
+    cols_needed = ["problem_id", "sequence_id", "skill", "problem_type", "type", "correct"]
+    file_path = "/home/rcyuh/Desktop/1. Đồ án tốt nghiệp/Co-supervised/assistment_2012_2013.csv"
+    nrows=1000
+       
+    # # Test
+    # pre = preprocessing_matrix(file_path=file_path)
+    # matrix_df = pre.process()

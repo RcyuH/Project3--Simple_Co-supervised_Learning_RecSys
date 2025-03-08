@@ -27,7 +27,7 @@ preprocessing for items meta data
 
 import pandas as pd
 from collections import Counter
-# from item_embedding import ItemEmbeddingGenerator
+from item_embedding import ItemEmbeddingGenerator
 
 class preprocessing_meta_data:
     def __init__(self, file_path, nrows=None, cols_needed=["problem_id", "sequence_id", "skill", "problem_type", "type", "correct"], sequence_id_list=None):
@@ -108,6 +108,12 @@ class preprocessing_matrix:
     def filter_matrix(self, threshold=2):
         # Binarize the data (only keep ratings >= threshold)
         self.df = self.df[self.df['rating'] >= 2]
+        
+    def process(self):
+        self.reverse_correct()
+        self.filter_matrix()
+    
+        return self.data
     
     def extract_sequence_id(self):
         try:
@@ -134,9 +140,9 @@ if __name__ == "__main__":
     pre_meta = preprocessing_meta_data(file_path=file_path, sequence_id_list=unique_values)
     items = pre_meta.process()
     
-    # # embedding
-    # generator = ItemEmbeddingGenerator()
-    # embeddings = generator.generate_item_embeddings(items)
-    # generator.save_embeddings(embeddings=embeddings)
+    # embedding
+    generator = ItemEmbeddingGenerator()
+    embeddings = generator.generate_item_embeddings(items)
+    generator.save_embeddings(embeddings=embeddings)
     
     
