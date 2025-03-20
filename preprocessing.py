@@ -37,14 +37,14 @@ class preprocessing_meta_data:
             self.sequence_id_list = sequence_id_list
             self.df = self.df[self.df["sequence_id"].isin(sequence_id_list)]
 
-        # Group by problem_id
-        self.df = self.df.groupby("problem_id").agg({
-            "sequence_id": "first",  # Giữ giá trị đầu tiên
-            "skill": "first",
-            "problem_type": "first",
-            "type": "first",
-            "correct": "mean"  # Tính trung bình
-        }).reset_index()
+        # # Group by problem_id
+        # self.df = self.df.groupby("problem_id").agg({
+        #     "sequence_id": "first",  # Giữ giá trị đầu tiên
+        #     "skill": "first",
+        #     "problem_type": "first",
+        #     "type": "first",
+        #     "correct": "mean"  # Tính trung bình
+        # }).reset_index()
         
         self.df.rename(columns={"correct": "correct_avg"}, inplace=True)
         
@@ -108,12 +108,6 @@ class preprocessing_matrix:
     def filter_matrix(self, threshold=2):
         # Binarize the data (only keep ratings >= threshold)
         self.df = self.df[self.df['rating'] >= 2]
-        
-    def process(self):
-        self.reverse_correct()
-        self.filter_matrix()
-    
-        return self.data
     
     def extract_sequence_id(self):
         try:
@@ -121,7 +115,7 @@ class preprocessing_matrix:
         except:
             unique_values = self.df["itemID"].unique()
         
-        return list(unique_values) 
+        return list(unique_values)
 
 if __name__ == "__main__":
     # Constant

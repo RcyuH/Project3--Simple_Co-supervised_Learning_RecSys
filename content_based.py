@@ -43,6 +43,7 @@ class ContentBasedRecommender:
                 user_profiles[user_id] = np.average(vectors, axis=0, weights=weights)
             else:
                 user_profiles[user_id] = np.zeros_like(next(iter(self.item_embeddings.values())))
+                # user_profiles[user_id] = np.zeros(len(next(iter(self.item_embeddings.values()))))
         
         return user_profiles
     
