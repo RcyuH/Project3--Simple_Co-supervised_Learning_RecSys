@@ -11,7 +11,7 @@ import numpy as np
 from typing import Dict, Set
 import os
 from pathlib import Path
-from preprocessing import preprocessing_meta_data
+from preprocessing import preprocessing_meta_data, preprocessing_matrix
 
 os.environ["TOKENIZjsonERS_PARALLELISM"] = "false"
 
@@ -127,10 +127,15 @@ if __name__ == "__main__":
     file_path = "/home/rcyuh/Desktop/1. Đồ án tốt nghiệp/Co-supervised/assistment_2012_2013.csv"
     nrows=1000
     
-    pre = preprocessing_meta_data(file_path, nrows, cols_needed)
-    items = pre.process()
+    pre = preprocessing_matrix(file_path=file_path)
+    pre.reverse_correct()
+    pre.filter_matrix()
+    matrix_df = pre.df
+    unique_values = pre.extract_sequence_id()
+    
+    pre_meta = preprocessing_meta_data(file_path=file_path, sequence_id_list=unique_values)
+    items_dict = pre_meta.process()
     
     generator = ItemEmbeddingGenerator()
-    generator.debug_prompt(items)
-
-    # embeddings = generator.generate_item_embeddings(items)
+    item_embeddings = generator.generate_item_embeddings(items_dict)
+    generator.save_embeddings(embeddings=item_embeddings)
