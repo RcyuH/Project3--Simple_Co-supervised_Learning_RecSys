@@ -27,7 +27,6 @@ preprocessing for items meta data
 
 import pandas as pd
 from collections import Counter
-from item_embedding import ItemEmbeddingGenerator
 
 class preprocessing_meta_data:
     def __init__(self, file_path, nrows=None, cols_needed=["problem_id", "sequence_id", "skill", "problem_type", "type", "correct"], sequence_id_list=None):
@@ -123,20 +122,20 @@ if __name__ == "__main__":
     file_path = "/home/rcyuh/Desktop/1. Đồ án tốt nghiệp/Co-supervised/assistment_2012_2013.csv"
     nrows=1000
        
-    # Test 1
-    pre = preprocessing_matrix(file_path=file_path)
-    pre.reverse_correct()
-    pre.filter_matrix()
-    matrix_df = pre.df
-    unique_values = pre.extract_sequence_id()
+    # # Test 1
+    # pre = preprocessing_matrix(file_path=file_path)
+    # pre.reverse_correct()
+    # pre.filter_matrix()
+    # matrix_df = pre.df
+    # unique_values = pre.extract_sequence_id()
         
-    # Test 2
-    pre_meta = preprocessing_meta_data(file_path=file_path, sequence_id_list=unique_values)
-    items = pre_meta.process()
+    # # Test 2
+    # pre_meta = preprocessing_meta_data(file_path=file_path, sequence_id_list=unique_values)
+    # items = pre_meta.process()
     
-    # embedding
-    generator = ItemEmbeddingGenerator()
-    embeddings = generator.generate_item_embeddings(items)
-    generator.save_embeddings(embeddings=embeddings)
+    # # embedding
+    # generator = ItemEmbeddingGenerator()
+    # embeddings = generator.generate_item_embeddings(items)
+    # generator.save_embeddings(embeddings=embeddings)
     
     
